@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppDispatch } from '../../redux/store';
 import { AddEmployee, EmployeeForm } from './types/Employee';
 import { addEmployee, updateEmployee } from './employeeSlice';
@@ -7,14 +7,9 @@ interface ModalEmployeeProps {
   isOpen: boolean;
   onClose: () => void;
   initialFormData?: EmployeeForm;
-}
-
-interface ModalEmployeeProps {
-  isOpen: boolean;
-  onClose: () => void;
-  initialFormData?: EmployeeForm;
   isAdding?: boolean;
 }
+
 const ModalEmployee: React.FC<ModalEmployeeProps> = ({
   isOpen,
   onClose,
@@ -77,12 +72,33 @@ const ModalEmployee: React.FC<ModalEmployeeProps> = ({
     }
   };
 
+  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
+  useEffect(() => {
+    const closeOnOverlayClick = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', closeOnOverlayClick);
+
+    return () => {
+      document.removeEventListener('keydown', closeOnOverlayClick);
+    };
+  }, [isOpen, onClose]);
+
   return (
-    <div className={`modal ${isOpen ? 'open' : ''}`}>
+    <div
+      className={`modal ${isOpen ? 'open' : ''}`}
+      onClick={handleOverlayClick}
+    >
       <div className="modal-content">
-        <span className="close" onClick={onClose}>
-          &times;
-        </span>
+        {/* Remove the close button */}
         <h2>
           {isAdding
             ? 'Добавить Сотрудника'
@@ -134,7 +150,7 @@ const ModalEmployee: React.FC<ModalEmployeeProps> = ({
           )}
           <button className="form-button" onClick={handleSave}>
             {initialFormData ? 'Редактировать' : 'Добавить'}
-          </button>{' '}
+          </button>
         </form>
       </div>
     </div>

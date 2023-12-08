@@ -63,12 +63,18 @@ const ModalCompany: React.FC<ModalProps> = ({
     }
   };
 
+  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
   return (
-    <div className={`modal ${isOpen ? 'open' : ''}`}>
+    <div
+      className={`modal ${isOpen ? 'open' : ''}`}
+      onClick={handleOverlayClick}
+    >
       <div className="modal-content">
-        <span className="close" onClick={onClose}>
-          &times;
-        </span>
         <h2>
           {initialFormData
             ? 'Редактировать данные о компании'

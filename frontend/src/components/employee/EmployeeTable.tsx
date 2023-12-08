@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../redux/store';
 import edit from '../../assets/edit.svg';
 import { EmployeeForm } from './types/Employee';
@@ -31,11 +31,45 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
     EmployeeForm | undefined
   >(undefined);
 
+  const handleCheckboxChange = (employeeId: number) => {
+    setSelectedCheckboxes((prev) => {
+      const updatedCheckboxes = { ...prev, [employeeId]: !prev[employeeId] };
+
+      const allVisibleSelected = Object.values(updatedCheckboxes).every(
+        (value) => value
+      );
+
+      setSelectAll(allVisibleSelected);
+
+      return updatedCheckboxes;
+    });
+  };
+
+  useEffect(() => {
+    const initialSelectedCheckboxes: Record<number, boolean> = {};
+    const filteredEmployees = selectedCompanyIds.length
+      ? employees.filter((employee) =>
+          selectedCompanyIds.includes(employee.companyId)
+        )
+      : employees;
+
+    filteredEmployees.forEach((employee) => {
+      initialSelectedCheckboxes[employee.id] =
+        selectedCheckboxes[employee.id] || false;
+    });
+
+    setSelectedCheckboxes(initialSelectedCheckboxes);
+
+    const allVisibleSelected = Object.values(initialSelectedCheckboxes).every(
+      (value) => value
+    );
+
+    if (selectAll !== allVisibleSelected) {
+      setSelectAll(allVisibleSelected);
+    }
+  }, [selectedCompanyIds, employees, selectAll]);
+
   const handleSelectAll = () => {
-    const updatedSelectAll = !selectAll;
-
-    setSelectAll(updatedSelectAll);
-
     setSelectedCheckboxes((prev) => {
       const updatedCheckboxes: Record<number, boolean> = {};
 
@@ -45,29 +79,18 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
           )
         : employees;
 
+      const totalVisibleCheckboxes = filteredEmployees.length;
+      const selectedCheckboxesCount =
+        Object.values(prev).filter(Boolean).length;
+
+      const updatedSelectAll = selectedCheckboxesCount < totalVisibleCheckboxes;
+
       filteredEmployees.forEach((employee) => {
         updatedCheckboxes[employee.id] = updatedSelectAll;
       });
 
-      return updatedCheckboxes;
-    });
-  };
-
-  const handleCheckboxChange = (employeeId: number) => {
-    setSelectedCheckboxes((prev) => {
-      const updatedCheckboxes = { ...prev, [employeeId]: !prev[employeeId] };
-
-      const allSelected = Object.values(updatedCheckboxes).every(
-        (value) => value
-      );
-      const atLeastOneUnchecked = Object.values(updatedCheckboxes).some(
-        (value) => !value
-      );
-
-      if (allSelected) {
-        setSelectAll(true);
-      } else if (atLeastOneUnchecked) {
-        setSelectAll(false);
+      if (selectAll !== updatedSelectAll) {
+        setSelectAll(updatedSelectAll);
       }
 
       return updatedCheckboxes;
@@ -91,9 +114,7 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
     : employees;
 
   const handleAddEmployee = () => {
-    console.log('Handling Add Employee...');
     setIsModalOpen(true);
-    console.log('isModalOpen:', isModalOpen);
   };
 
   const handleDelete = async () => {
@@ -117,10 +138,6 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
         )
       );
 
-      setSelectAll(false);
-
-      const deletedEmployeeCount = selectedEmployeesIds.length;
-
       companies.forEach((company) => {
         const employeesInCompany = employees.filter(
           (employee) =>
@@ -130,13 +147,6 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
 
         const updatedCount = employeesInCompany.length;
 
-        console.log(
-          'Updating employee count for company:',
-          company.id,
-          'New count:',
-          updatedCount
-        );
-
         dispatch(
           updateEmployeeCount({
             companyId: company.id,
@@ -145,7 +155,7 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
         );
       });
 
-      console.log('Number of deleted employees:', deletedEmployeeCount);
+      setSelectAll(false);
     } catch (error) {
       console.error('Error deleting employees:', error);
     }
@@ -154,8 +164,10 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
   return (
     <div className="employee-table-container">
       <div className="table-header">
-        <button onClick={handleAddEmployee}>Добавить</button>
-        <button onClick={handleDelete}>Удалить</button>
+        <div className="button-container">
+          <button onClick={handleAddEmployee}>Добавить</button>
+          <button onClick={handleDelete}>Удалить</button>
+        </div>
       </div>
       <table>
         <thead>

@@ -126,10 +126,12 @@ function CompanyTable({
     <div className="company-table-container">
       {' '}
       <div className="table-header">
-        <button onClick={handleAddCompany}>Добавить</button>
-        <button onClick={() => handleDelete(propSelectedCompanyIds)}>
-          Удалить
-        </button>
+        <div className="button-container">
+          <button onClick={handleAddCompany}>Добавить</button>
+          <button onClick={() => handleDelete(propSelectedCompanyIds)}>
+            Удалить
+          </button>
+        </div>
       </div>
       <table>
         <thead>

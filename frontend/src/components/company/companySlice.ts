@@ -86,11 +86,6 @@ const companySlice = createSlice({
       })
       .addCase(updateEmployeeCount, (state, action) => {
         const { companyId, employee_count } = action.payload;
-        console.log(
-          'Received updateEmployeeCount payload:',
-          companyId,
-          employee_count
-        );
 
         const companyIndex = state.companies.findIndex(
           (c) => c.id === companyId
@@ -102,8 +97,6 @@ const companySlice = createSlice({
             { ...state.companies[companyIndex], employee_count },
             ...state.companies.slice(companyIndex + 1),
           ];
-
-          console.log('Updated state:', state.companies);
         } else {
           console.log('Company not found for updateEmployeeCount:', companyId);
         }
