@@ -31,6 +31,7 @@ function CompanyTable({
   const [selectedCompany, setSelectedCompany] = useState<Company | undefined>(
     undefined
   );
+  const [selectedCount, setSelectedCount] = useState<number>(0);
 
   useEffect(() => {
     localStorage.setItem(
@@ -47,7 +48,10 @@ function CompanyTable({
       );
     });
     setSelectedCheckboxes(initialSelectedCheckboxes);
+    setSelectedCount(propSelectedCompanyIds.length);
+    setSelectAll(propSelectedCompanyIds.length === companies.length);
   }, [propSelectedCompanyIds, companies]);
+
   const handleEditClick = (company: Company) => {
     console.log('Edit icon clicked');
     setIsModalOpen(true);
@@ -65,7 +69,7 @@ function CompanyTable({
     setSelectedCheckboxes((prev) => {
       const updatedCheckboxes: Record<number, boolean> = {};
       companies.forEach((company) => {
-        updatedCheckboxes[company.id] = !selectAll;
+        updatedCheckboxes[company.id] = selectAll;
       });
       return updatedCheckboxes;
     });
@@ -86,10 +90,10 @@ function CompanyTable({
         : [...prev, companyId]
     );
 
-    const allChecked = Object.values(selectedCheckboxes).every(
-      (isChecked) => isChecked
+    setSelectedCount((prevCount) =>
+      selectedCheckboxes[companyId] ? prevCount - 1 : prevCount + 1
     );
-    setSelectAll(allChecked);
+    setSelectAll(selectedCount + 1 === companies.length);
   };
 
   const handleAddCompany = () => {
@@ -111,6 +115,7 @@ function CompanyTable({
         setSelectAll(false);
         setSelectedCheckboxes({});
         setSelectedCompanyIds([]);
+        setSelectedCount(0);
       })
       .catch((error) => {
         console.error('Error deleting companies:', error);

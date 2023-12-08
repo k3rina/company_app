@@ -32,7 +32,9 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
   >(undefined);
 
   const handleSelectAll = () => {
-    setSelectAll((prevSelectAll) => !prevSelectAll);
+    const updatedSelectAll = !selectAll;
+
+    setSelectAll(updatedSelectAll);
 
     setSelectedCheckboxes((prev) => {
       const updatedCheckboxes: Record<number, boolean> = {};
@@ -44,7 +46,7 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
         : employees;
 
       filteredEmployees.forEach((employee) => {
-        updatedCheckboxes[employee.id] = !selectAll;
+        updatedCheckboxes[employee.id] = updatedSelectAll;
       });
 
       return updatedCheckboxes;
@@ -52,14 +54,24 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
   };
 
   const handleCheckboxChange = (employeeId: number) => {
-    setSelectedCheckboxes((prev) => ({
-      ...prev,
-      [employeeId]: !prev[employeeId],
-    }));
+    setSelectedCheckboxes((prev) => {
+      const updatedCheckboxes = { ...prev, [employeeId]: !prev[employeeId] };
 
-    const atLeastOneUnchecked =
-      Object.values(selectedCheckboxes).includes(true);
-    setSelectAll(!atLeastOneUnchecked);
+      const allSelected = Object.values(updatedCheckboxes).every(
+        (value) => value
+      );
+      const atLeastOneUnchecked = Object.values(updatedCheckboxes).some(
+        (value) => !value
+      );
+
+      if (allSelected) {
+        setSelectAll(true);
+      } else if (atLeastOneUnchecked) {
+        setSelectAll(false);
+      }
+
+      return updatedCheckboxes;
+    });
   };
 
   const handleEditClick = (employee: EmployeeForm) => {
