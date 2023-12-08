@@ -47,27 +47,32 @@ type DeleteEmployeePayload = number | number[];
 export const deleteEmployee = createAsyncThunk(
   'employees/delete',
   async (employeeIds: number[], { dispatch }) => {
-    const response = await api.deleteEmployeesFetch(employeeIds);
-    const employeesByCompany = response.employees.reduce(
-      (acc: Record<number, Employee[]>, employee: Employee) => {
-        const companyId = employee.companyId;
-        acc[companyId] = acc[companyId] || [];
-        acc[companyId].push(employee);
-        return acc;
-      },
-      {}
-    );
-
-    Object.entries(employeesByCompany).forEach(([companyId, employees]) => {
-      dispatch(
-        updateEmployeeCount({
-          companyId: parseInt(companyId),
-          employee_count: response.employee_count,
-        })
+    try {
+      const response = await api.deleteEmployeesFetch(employeeIds);
+      const employeesByCompany = response.employees.reduce(
+        (acc: Record<number, Employee[]>, employee: Employee) => {
+          const companyId = employee.companyId;
+          acc[companyId] = acc[companyId] || [];
+          acc[companyId].push(employee);
+          return acc;
+        },
+        {}
       );
-    });
 
-    return employeeIds;
+      Object.entries(employeesByCompany).forEach(([companyId, employees]) => {
+        dispatch(
+          updateEmployeeCount({
+            companyId: parseInt(companyId),
+            employee_count: response.employee_count,
+          })
+        );
+      });
+
+      return employeeIds;
+    } catch (error) {
+      console.error('Error deleting employees:', error);
+      throw error; 
+    }
   }
 );
 

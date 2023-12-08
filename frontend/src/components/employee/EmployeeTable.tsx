@@ -5,6 +5,7 @@ import { EmployeeForm } from './types/Employee';
 import ModalEmployee from './ModalEmployee';
 import { deleteEmployee } from './employeeSlice';
 import '../common/styles/sharedStyles.css';
+import { updateEmployeeCount } from '../company/companySlice';
 
 interface EmployeeTableProps {
   selectedCompanyIds: number[];
@@ -15,6 +16,7 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
 }) => {
   const dispatch = useAppDispatch();
   const { employees } = useAppSelector((store) => store.employees);
+  const { companies } = useAppSelector((store) => store.companies);
   const [selectAll, setSelectAll] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCheckboxes, setSelectedCheckboxes] = useState<
@@ -82,7 +84,7 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
     console.log('isModalOpen:', isModalOpen);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     const selectedEmployeesIds = Object.entries(selectedCheckboxes)
       .filter(([id, isSelected]) => isSelected)
       .map(([id]) => parseInt(id, 10));
@@ -92,14 +94,49 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
       return;
     }
 
-    dispatch(deleteEmployee(selectedEmployeesIds))
-      .then(() => {
-        setSelectAll(false);
-        setSelectedCheckboxes({});
-      })
-      .catch((error) => {
-        console.error('Error deleting employees:', error);
+    try {
+      await dispatch(deleteEmployee(selectedEmployeesIds));
+
+      setSelectedCheckboxes((prev) =>
+        Object.fromEntries(
+          Object.entries(prev).filter(
+            ([id]) => !selectedEmployeesIds.includes(parseInt(id, 10))
+          )
+        )
+      );
+
+      setSelectAll(false);
+
+      const deletedEmployeeCount = selectedEmployeesIds.length;
+
+      companies.forEach((company) => {
+        const employeesInCompany = employees.filter(
+          (employee) =>
+            employee.companyId === company.id &&
+            !selectedEmployeesIds.includes(employee.id)
+        );
+
+        const updatedCount = employeesInCompany.length;
+
+        console.log(
+          'Updating employee count for company:',
+          company.id,
+          'New count:',
+          updatedCount
+        );
+
+        dispatch(
+          updateEmployeeCount({
+            companyId: company.id,
+            employee_count: updatedCount,
+          })
+        );
       });
+
+      console.log('Number of deleted employees:', deletedEmployeeCount);
+    } catch (error) {
+      console.error('Error deleting employees:', error);
+    }
   };
 
   return (
